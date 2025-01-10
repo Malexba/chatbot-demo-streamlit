@@ -1,6 +1,60 @@
 import streamlit as st
-from openai import OpenAI
+from llamaapi import LLamaAPI
+import os
+import json
 
+# Load API token from environment variable
+LLAMA_TOKEN = os.getenv("LLAMA_TOKEN")
+
+llama = LlamaAPI(LLAMA_TOKEN)
+
+# Function to interact with Llama API
+def query_llama_api(prompt, history):
+    api_request_json = {
+        "model": "llama3.1-8b",
+        "messages": history + [{"role": "user", "content": prompt}],
+        "stream": False,
+    }
+    try:
+        response = llama.run(api_request_json)
+        return response.json()["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f"Error: {e}"
+
+# Streamlit app UI
+st.title("Llama Chatbot")
+st.write("Chat with an AI powered by Llama!")
+
+# Session state to store chat history
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+# User input
+user_input = st.text_input("You:", "", key="user_input")
+
+if st.button("Send") and user_input.strip():
+    # Add user message to history
+    st.session_state.history.append({"role": "user", "content": user_input})
+
+    # Get AI response
+    with st.spinner("Llama is typing..."):
+        response = query_llama_api(user_input, st.session_state.history)
+
+    # Add AI response to history
+    st.session_state.history.append({"role": "assistant", "content": response})
+
+# Display conversation
+for message in st.session_state.history:
+    if message["role"] == "user":
+        st.write(f"**You:** {message['content']}")
+    elif message["role"] == "assistant":
+        st.write(f"**Llama:** {message['content']}")
+
+# Clear chat history button
+if st.button("Clear Chat"):
+    st.session_state.history = []
+
+'''
 # Show title and description.
 st.title("💬 Chatbot")
 st.write(
@@ -54,3 +108,4 @@ else:
         with st.chat_message("assistant"):
             response = st.write_stream(stream)
         st.session_state.messages.append({"role": "assistant", "content": response})
+'''
