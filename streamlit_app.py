@@ -1,58 +1,34 @@
 import streamlit as st
-from llamaapi import LLamaAPI
+from huggingface_hub import login, InferenceApi
 import os
-import json
 
-# Load API token from environment variable
-LLAMA_TOKEN = os.getenv("LLAMA_TOKEN")
+## Initialize the Llama API
+model_id = "meta-llama/Llama-3.1-8B"
+token = os.getenv("LLAMA_TOKEN")  # Use your secret token
+api = InferenceApi(repo_id=model_id, token=token)
 
-llama = LLamaAPI(LLAMA_TOKEN)
-
-# Function to interact with Llama API
-def query_llama_api(prompt, history):
-    api_request_json = {
-        "model": "llama3.1-8b",
-        "messages": history + [{"role": "user", "content": prompt}],
-        "stream": False,
-    }
-    try:
-        response = llama.run(api_request_json)
-        return response.json()["choices"][0]["message"]["content"]
-    except Exception as e:
-        return f"Error: {e}"
-
-# Streamlit app UI
 st.title("Llama Chatbot")
-st.write("Chat with an AI powered by Llama!")
+st.write("Ask anything!")
 
-# Session state to store chat history
-if "history" not in st.session_state:
-    st.session_state.history = []
+# Chat interface
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
 
-# User input
-user_input = st.text_input("You:", "", key="user_input")
+# Input from user
+user_input = st.text_input("You: ", placeholder="Type your question here...", key="user_input")
 
-if st.button("Send") and user_input.strip():
-    # Add user message to history
-    st.session_state.history.append({"role": "user", "content": user_input})
-
-    # Get AI response
-    with st.spinner("Llama is typing..."):
-        response = query_llama_api(user_input, st.session_state.history)
-
-    # Add AI response to history
-    st.session_state.history.append({"role": "assistant", "content": response})
+# Handle conversation
+if st.button("Send") and user_input:
+    st.session_state["messages"].append({"role": "user", "content": user_input})
+    response = api(inputs=user_input)
+    st.session_state["messages"].append({"role": "assistant", "content": response["text"]})
 
 # Display conversation
-for message in st.session_state.history:
+for message in st.session_state["messages"]:
     if message["role"] == "user":
         st.write(f"**You:** {message['content']}")
-    elif message["role"] == "assistant":
+    else:
         st.write(f"**Llama:** {message['content']}")
-
-# Clear chat history button
-if st.button("Clear Chat"):
-    st.session_state.history = []
 
 '''
 # Show title and description.
