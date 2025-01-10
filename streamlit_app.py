@@ -6,7 +6,7 @@ import json
 # Load API token from environment variable
 LLAMA_TOKEN = os.getenv("LLAMA_TOKEN")
 
-llama = LlamaAPI(LLAMA_TOKEN)
+llama = LLamaAPI(LLAMA_TOKEN)
 
 # Function to interact with Llama API
 def query_llama_api(prompt, history):
