@@ -5,7 +5,7 @@ import os
 ## Initialize the Llama API
 model_id = "meta-llama/Llama-3.1-8B"
 token = os.getenv("LLAMA_TOKEN")  # Use your secret token
-print(token)
+st.title(token)
 
 '''
 # Show title and description.
